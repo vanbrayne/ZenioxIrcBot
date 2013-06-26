@@ -1,9 +1,8 @@
-﻿using System;
+﻿#define TWITCH
+
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+
 using IrcDotNet;
 using IrcDotNet.Samples.Common;
 
@@ -11,39 +10,48 @@ namespace ZenioxBot
 {
     public class TestBot : BasicIrcBot
     {
-        private const string quitMessage = "ZenioxBot ends";
+        private const string MyQuitMessage = "ZenioxBot ends";
+
+#if TWITCH
+        private const string ChannelName = "zenioxbot";
+#else
+        private const string ChannelName = "glade";
+#endif
 
         public TestBot()
-            : base()
         {
-            //this.ConnectCommand("irc.twitch.tv");
-            this.ConnectCommand("zenioxbot.jtvirc.com");
+#if TWITCH
+            this.ConnectCommand("irc.twitch.tv");
+            ////this.ConnectCommand(string.Format("{0}.jtvirc.com", ChannelName));
+#else
+            this.ConnectCommand("irc.projectepsilon.net");
+#endif
         }
 
         public override IrcRegistrationInfo RegistrationInfo
         {
             get
             {
-                return new IrcUserRegistrationInfo()
-                                    {
+                return new IrcUserRegistrationInfo
+                           {
+#if TWITCH
                                         NickName = "ZenioxBot",
                                         UserName = "zenioxbot",
-                                        Password = "snille(bot)",
+                                        Password = "bottenarnadd",
                                         RealName = "Zeniox Bot"
+#else
+                                        NickName = "ZenioxBot",
+                                        UserName = "zenioxbot",
+                                        RealName = "Zeniox Bot"
+#endif
                                     };
-
             }
-        }
-
-        private void ConnectCommand(string server)
-        {
-            Connect(server, this.RegistrationInfo);
         }
 
         public override string QuitMessage
         {
-            get { return quitMessage; }
-        }
+            get { return MyQuitMessage; }
+        } 
 
         protected override void OnClientConnect(IrcClient client)
         {
@@ -58,6 +66,10 @@ namespace ZenioxBot
         protected override void OnClientRegistered(IrcClient client)
         {
             Console.Out.WriteLine("OnClientRegistered");
+
+            var channel = string.Format("#{0}", ChannelName);
+            Console.Out.WriteLine("Joining {0}", channel);
+            client.Channels.Join(channel);
         }
 
         protected override void OnLocalUserJoinedChannel(IrcLocalUser localUser, IrcChannelEventArgs e)
@@ -80,8 +92,9 @@ namespace ZenioxBot
         protected override void OnLocalUserMessageReceived(IrcLocalUser localUser, IrcMessageEventArgs e)
         {
             Console.Out.WriteLine("OnLocalUserMessageReceived");
-            Console.Out.WriteLine(localUser.RealName);
-            Console.Out.WriteLine(e.Text);
+            Console.Out.WriteLine(localUser.NickName);
+            Console.Out.WriteLine("\"{0}\"", e.Text);
+            localUser.SendNotice(e.Targets, "Test");
         }
 
         protected override void OnChannelUserJoined(IrcChannel channel, IrcChannelUserEventArgs e)
@@ -125,25 +138,26 @@ namespace ZenioxBot
             this.ChatCommandProcessors.Add("talk", this.ProcessChatCommandTalk);
         }
 
-        #region Chat Command Processors
-
-        private void ProcessChatCommandTalk(IrcClient client, IIrcMessageSource source,
-            IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
-        {
-            var replyTargets = GetDefaultReplyTarget(client, source, targets);
-            client.LocalUser.SendMessage(replyTargets, "I can't talk yet. Under construction...");
-        }
-        #endregion
-
         protected override void InitializeCommandProcessors()
         {
             base.InitializeCommandProcessors();
         }
 
-        #region Command Processors
+        private void ProcessChatCommandTalk(
+            IrcClient client,
+            IIrcMessageSource source,
+            IList<IIrcMessageTarget> targets,
+            string command,
+            IList<string> parameters)
+        {
+            var replyTargets = GetDefaultReplyTarget(client, source, targets);
+            client.LocalUser.SendMessage(replyTargets, "I can't talk yet. Under construction...");
+        }
 
-        //
-
-        #endregion
+        private void ConnectCommand(string server)
+        {
+            Console.Out.WriteLine("Connecting to {0}", server);
+            this.Connect(server, this.RegistrationInfo);
+        }
     }
 }
