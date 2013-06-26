@@ -31,11 +31,6 @@ namespace ZenioxBot
                                         Password = "snille(bot)",
                                         RealName = "Zeniox Bot"
                                     };
-                                    //{
-                                    //    NickName = "Zeniox",
-                                    //    UserName = "zeniox",
-                                    //    Password = "dra3gon"
-                                    //};
 
             }
         }
