@@ -145,6 +145,11 @@ namespace ZenioxBot
                 this.ToString());
         }
 
+        internal void OnCommand(Dispatcher.MessageType messageType, string command, string[] parameters, IrcIdentity sender)
+        {
+
+        }
+
         /// <summary>
         /// The join.
         /// </summary>

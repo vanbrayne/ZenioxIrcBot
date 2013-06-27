@@ -11,29 +11,22 @@
     /// </summary>
     internal class Program
     {
-        private static readonly int MillisecondsBetweenCommands = int.Parse(ConfigurationManager.AppSettings.Get("MillisecondsBetweenCommands") ?? @"1000");
-
-        private static readonly string HostName = ConfigurationManager.AppSettings.Get("HostName") ?? @"irc.twitch.tv";
-
-        private static readonly string UserName = ConfigurationManager.AppSettings.Get("UserName") ?? @"zenioxbot";
-
-        private static readonly string RealName = ConfigurationManager.AppSettings.Get("RealName") ?? @"Zeniox Bot";
-
-        private static readonly string NickName = ConfigurationManager.AppSettings.Get("NickName") ?? @"ZenioxBot";
-
-        private static readonly string TheWord = ConfigurationManager.AppSettings.Get("TheWord");
-
-        private static readonly string ChannelName = ConfigurationManager.AppSettings.Get("ChannelName") ?? @"#zenioxbot";
-
         internal static void Main(string[] args)
         {
             try
             {
-                using (var serverUser = new ServerUser(HostName, UserName, TheWord, NickName, RealName, MillisecondsBetweenCommands))
+                using (var serverUser = new ServerUser(
+                    ConfigurationManager.AppSettings.Get("HostName"),
+                    ConfigurationManager.AppSettings.Get("UserName"),
+                    ConfigurationManager.AppSettings.Get("TheWord"),
+                    ConfigurationManager.AppSettings.Get("NickName"),
+                    ConfigurationManager.AppSettings.Get("RealName"), 
+                    int.Parse(ConfigurationManager.AppSettings.Get("MillisecondsBetweenCommands"))))
                 {
-                    using (var channel = new Channel(serverUser, ChannelName))
+                    serverUser.CommandPrefix = ".";
+                    using (var channel = new Channel(serverUser, ConfigurationManager.AppSettings.Get("ChannelName")))
                     {
-                        var isRunning = true;
+  var isRunning = true;
                         while (isRunning)
                         {
                             Console.Write("> ");
