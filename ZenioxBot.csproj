@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F741810E-F916-4B76-902F-438A765AC0DD}</ProjectGuid>
+    <ProjectGuid>{4DD80CE1-1C3E-4590-B39C-01F8176AB214}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ZenioxBot</RootNamespace>
@@ -32,10 +32,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IrcDotNet">
-      <HintPath>packages\IrcDotNet.0.4.1\lib\net40\IrcDotNet.dll</HintPath>
+    <Reference Include="NetIrc2">
+      <HintPath>packages\NetIrc2.1.0.0.0\lib\NetIrc2.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -44,27 +46,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Common\BasicIrcBot.cs" />
-    <Compile Include="Common\ConsoleUtilities.cs" />
-    <Compile Include="Common\InvalidCommandParametersException.cs" />
-    <Compile Include="Common\IrcBot.cs" />
-    <Compile Include="Common\IrcBotException.cs" />
-    <Compile Include="Common\IrcBotUtilities.cs" />
-    <Compile Include="Common\ProgramInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs" />
-    <Compile Include="TestBot.cs" />
+    <Compile Include="Channel.cs" />
+    <Compile Include="Dispatcher.cs" />
+    <Compile Include="ServerUser.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Waiter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="App_Readme\IrcDotNet.authors.md" />
-    <None Include="App_Readme\IrcDotNet.license.md" />
-    <None Include="App_Readme\IrcDotNet.readme.md" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
