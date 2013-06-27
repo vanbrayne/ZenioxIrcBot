@@ -17,6 +17,7 @@ namespace ZenioxBot
 
     using NetIrc2;
     using NetIrc2.Events;
+    using NetIrc2.Parsing;
 
     /// <summary>
     ///     Handles all things for a specific login.
@@ -66,7 +67,7 @@ namespace ZenioxBot
 
             this.Client = new IrcClient();
 
-            Dispatcher.Add(this);
+            EventDispatcher.Add(this);
 
             // Connect
             this.Wait();
@@ -257,7 +258,7 @@ namespace ZenioxBot
         /// <param name="chatMessageEventArgs">
         /// The chat message event args.
         /// </param>
-        internal void OnMessage(Dispatcher.MessageType messageType, ChatMessageEventArgs chatMessageEventArgs)
+        internal void OnMessage(EventDispatcher.MessageType messageType, ChatMessageEventArgs chatMessageEventArgs)
         {
             string message = chatMessageEventArgs.Message;
             var channel = this.GetChannel(chatMessageEventArgs.Recipient, true);
@@ -300,9 +301,30 @@ namespace ZenioxBot
             Debug.WriteLine(string.Format("Simple message: \"{0}\"", message), this.ToString());
         }
 
+        internal void SendCommand(IrcStatement command)
+        {
+            this.Wait();
+            this.Client.IrcCommand(command);
+            this.CommandSent();
+        }
+
         internal void SendMessage(string receiver, string message)
         {
+            this.Wait();
             this.Client.Message(receiver, message);
+            this.CommandSent();
+        }
+
+        internal void OnNameList(NameListReplyEventArgs nameListReplyEventArgs)
+        {
+            var channel = this.GetChannel(nameListReplyEventArgs.Channel);
+            channel.OnNameList(nameListReplyEventArgs.GetNameList());
+        }
+
+        private static string[] GetParameters(string message)
+        {
+            var parts = message.Split(' ');
+            return parts.Skip(1).ToArray();
         }
 
         private string GetCommand(string message)
@@ -310,16 +332,15 @@ namespace ZenioxBot
             var parts = message.Split(' ');
             var command = parts[0].ToLower();
 
+            if (!command.StartsWith(this.CommandPrefix))
+            {
+                return null;
+            }
+
             // Remove command prefix
             command = command.Substring(this.CommandPrefix.Length);
 
             return string.IsNullOrEmpty(command) ? null : command;
-        }
-
-        private static string[] GetParameters(string message)
-        {
-            var parts = message.Split(' ');
-            return parts.Skip(1).ToArray();
         }
 
         /// <summary>
@@ -356,22 +377,6 @@ namespace ZenioxBot
             }
 
             return this.channelList[name];
-        }
-
-        /// <summary>
-        /// Check if a message is a command
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        private bool IsCommand(string message)
-        {
-            if (string.IsNullOrEmpty(this.CommandPrefix))
-            {
-                // No command prefix has been specified, so no messages are considered as commands
-                return false;
-            }
-
-            return message.StartsWith(this.CommandPrefix);
         }
 
         #endregion

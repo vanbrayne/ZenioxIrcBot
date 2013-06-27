@@ -34,7 +34,7 @@ namespace ZenioxBot
         {
             this.ServerUser = serverUser;
             this.Name = name;
-
+            this.KickBots = false;
             this.ServerUser.Add(this);
 
             // Join
@@ -55,6 +55,8 @@ namespace ZenioxBot
         /// </summary>
         public ServerUser ServerUser { get; private set; }
 
+        public bool KickBots { get; set; }
+        
         #endregion
 
         #region Properties
@@ -121,6 +123,10 @@ namespace ZenioxBot
             {
                 this.IsActive = isJoin;
             }
+            else
+            {
+                this.EvaluateUserName(identity.Username);
+            }
         }
 
         /// <summary>
@@ -135,7 +141,7 @@ namespace ZenioxBot
         /// <param name="sender">
         /// The sender.
         /// </param>
-        internal void OnMessage(Dispatcher.MessageType messageType, string message, IrcIdentity sender)
+        internal void OnMessage(EventDispatcher.MessageType messageType, string message, IrcIdentity sender)
         {
             Debug.WriteLine(
                 string.Format(
@@ -145,11 +151,24 @@ namespace ZenioxBot
                 this.ToString());
         }
 
-        internal void OnCommand(Dispatcher.MessageType messageType, string command, string[] parameters, IrcIdentity sender)
+        internal void OnCommand(EventDispatcher.MessageType messageType, string command, string[] parameters, IrcIdentity sender)
         {
-
+            CommandDispatcher.Dispatch(command, parameters, sender, this.ServerUser, this);
         }
 
+        internal void OnNameList(IrcString[] ircString)
+        {
+            foreach (var name in ircString)
+            {
+                this.EvaluateUserName(name);
+            }
+        }
+
+        internal void SendMessage(string message)
+        {
+            ServerUser.SendMessage(this.Name, message);
+        }
+        
         /// <summary>
         /// The join.
         /// </summary>
@@ -163,5 +182,23 @@ namespace ZenioxBot
         }
 
         #endregion
+        
+        private void EvaluateUserName(string name)
+        {
+            if (name == this.ServerUser.UserName) return;
+
+            if (name.EndsWith("bot") && this.KickBots)
+            {
+                this.SendMessage(string.Format("I would like to kick out {0}", name));
+                //this.Kick(name, "There can be only one bot - ZenioxBot!");
+            }
+        }
+
+        private void Kick(string name, string reason = null)
+        {
+            ServerUser.Wait();
+            ServerUser.Client.Kick(name, this.Name, reason);
+            ServerUser.CommandSent();
+        }
     }
 }

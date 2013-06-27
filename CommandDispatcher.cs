@@ -24,52 +24,37 @@ namespace ZenioxBot
         /// <summary>
         /// The command list.
         /// </summary>
-        internal static readonly Dictionary<string, CommandFunction> CommandList = new Dictionary<string, CommandFunction>();
-
-        #endregion
-
-        #region Delegates
-
-        /// <summary>
-        /// The command function.
-        /// </summary>
-        /// <param name="command">
-        /// The command.
-        /// </param>
-        /// <param name="parameters">
-        /// The parameters.
-        /// </param>
-        /// <param name="sender">
-        /// The sender.
-        /// </param>
-        /// <param name="serverUser">
-        /// The server user.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        internal delegate void CommandFunction(string command, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel);
+        internal static readonly Dictionary<string, Command> CommandList = new Dictionary<string, Command>();
 
         #endregion
 
         #region Methods
 
-        internal static void Dispatch(string command, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
+        internal static void Dispatch(string commandName, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
-            if (CommandList.ContainsKey(command))
+            if (CommandList.ContainsKey(commandName))
             {
-                CommandFunction d = CommandList[command];
-                d(command, parameters, sender, serverUser, channel);
+                var command = CommandList[commandName];
+                command.Function(commandName, parameters, sender, serverUser, channel);
             }
             else
             {
+                var commandCompressed = commandName;
+
+                if (null != parameters && parameters.Length > 0)
+                {
+                    commandCompressed += string.Format(" ({0})", string.Join(",", parameters));
+                }
                 Debug.WriteLine(
                     string.Format(
-                        "Unknown command {0}({1}) (from {2})", 
-                        command, 
-                        string.Join(",", parameters), 
+                        "Unknown command {0} (from {1})", 
+                        commandCompressed,
                         (sender != null) ? sender.Nickname.ToString() : "Anonymous"), 
                     null != channel ? channel.ToString() : serverUser.ToString());
+                var message = string.Format(
+                    "Unknown command {0}",
+                    commandCompressed);
+                serverUser.SendMessage(Command.GetReceiver(sender, channel), message);
             }
         }
 

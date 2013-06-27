@@ -11,7 +11,7 @@ namespace ZenioxBot
     /// <summary>
     /// Dispatches all events to the right <see cref="ServerUser"/>.
     /// </summary>
-    public static class Dispatcher
+    public static class EventDispatcher
     {
         /// <summary>
         /// All known ServerUsers
@@ -141,8 +141,7 @@ namespace ZenioxBot
         private static void OnNameListReply(object sender, NameListReplyEventArgs nameListReplyEventArgs)
         {
             var serverUser = GetServerUser(sender);
-            var names = string.Join<IrcString>(", ", nameListReplyEventArgs.GetNameList());
-            Debug.WriteLine(string.Format("ON_NAME_LIST_REPLY: {0}", names), serverUser.ToString());
+            serverUser.OnNameList(nameListReplyEventArgs);
         }
 
         private static void OnNameListEnd(object sender, NameListEndEventArgs nameListEndEventArgs)
