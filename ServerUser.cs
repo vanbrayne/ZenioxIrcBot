@@ -12,6 +12,7 @@ namespace ZenioxBot
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.Linq;
     using System.Threading;
 
@@ -135,6 +136,14 @@ namespace ZenioxBot
         #endregion
 
         #region Properties
+
+        public CultureInfo CultureInfo
+        {
+            get
+            {
+                return new CultureInfo("en-US");
+            }
+        }
 
         /// <summary>
         /// Gets or sets the password that we use for login

@@ -81,11 +81,15 @@ namespace ZenioxBot
                                           {
                                               KickBots = true
                                           };
+
+                            channel.SendMessage(string.Format(
+                                "Hello everyone! Write \"+hello\" if you would like me to respond to your chat messages. :) For other commands - try \"+help\"."));
                             break;
                         case "q":
                         case "l":
                             if (null != channel)
                             {
+                                channel.SendMessage("I'm leaving for now, see you again!");
                                 channel.Leave();
                                 serverUser.LogOut();
                             }

@@ -10,7 +10,6 @@ namespace ZenioxBot
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Net;
 
@@ -33,6 +32,17 @@ namespace ZenioxBot
         #region Public Methods and Operators
 
         /// <summary>
+        ///     Initializes static members of the <see cref="CommandDispatcher" /> class.
+        /// </summary>
+        public static void Register()
+        {
+            var command = new Command("time", TimeCommand);
+            command = new Command("help", HelpCommand);
+            command = new Command("hello", TalkCommand);
+            command = new Command("bye", TalkCommand);
+        }
+
+        /// <summary>
         /// The ask romulon.
         /// </summary>
         /// <param name="message">
@@ -51,7 +61,7 @@ namespace ZenioxBot
         {
             try
             {
-                string answer = Rest.Post(
+                var answer = Rest.Post(
                     new Uri("http://www.pandorabots.com"),
                     "/pandora/talk?botid=823a1209ae36baf3",
                     new KeyValuePair<string, string>("botcust2", userName),
@@ -67,6 +77,7 @@ namespace ZenioxBot
 
                 answer = answer.Replace("ALICE A.I.", "Zeniox Inc.");
                 answer = answer.Replace("ALICE", "Zeniox");
+                answer = answer.Replace("seeker", "sir");
                 if (!string.IsNullOrWhiteSpace(botName))
                 {
                     // Replace the bot name with our own
@@ -81,19 +92,6 @@ namespace ZenioxBot
                 Console.WriteLine("Failed to ask Dr. Romulon");
                 return null;
             }
-        }
-
-        /// <summary>
-        ///     Initializes static members of the <see cref="CommandDispatcher" /> class.
-        /// </summary>
-        public static void Register()
-        {
-            var command = new Command("time", TimeCommand);
-            command = new Command("fuck", FuckCommand);
-            command = new Command("hi", HelloCommand);
-            command = new Command("hello", HelloCommand);
-            command = new Command("help", HelpCommand);
-            command = new Command("talk", TalkCommand);
         }
 
         #endregion
@@ -161,28 +159,21 @@ namespace ZenioxBot
         /// </param>
         private static void TalkCommand(string c, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
-            bool commandIsOk = true;
+            var commandIsOk = true;
             bool turnOn;
-            if (null == parameters || parameters.Length != 1)
+
+            switch (c)
             {
-                commandIsOk = false;
-                turnOn = false;
-            }
-            else
-            {
-                switch (parameters[0])
-                {
-                    case "on":
-                        turnOn = true;
-                        break;
-                    case "off":
-                        turnOn = false;
-                        break;
-                    default:
-                        turnOn = false;
-                        commandIsOk = false;
-                        break;
-                }
+                case "hello":
+                    turnOn = true;
+                    break;
+                case "bye":
+                    turnOn = false;
+                    break;
+                default:
+                    turnOn = false;
+                    commandIsOk = false;
+                    break;
             }
 
             if (commandIsOk)
@@ -196,98 +187,36 @@ namespace ZenioxBot
 
                 user.TalkTo = turnOn;
 
-
                 if (turnOn)
                 {
                     if (!user.HasBeenPresented)
                     {
-                        var a = AskRomulon(string.Format("My name is {0}", sender.Nickname), sender.Username, serverUser.NickName);
+                        AskRomulon(string.Format("My name is {0}", sender.Nickname), sender.Username, serverUser.NickName);
+                        var a = AskRomulon("Hello", sender.Username, serverUser.NickName);
                         serverUser.SendMessage(Command.GetReceiver(sender, channel), a);
                         user.HasBeenPresented = true;
                     }
                 }
                 else
                 {
-                    serverUser.SendMessage(Command.GetReceiver(sender, channel), "OK, I will stop talking to you.");
+                    if (!user.HasBeenPresented)
+                    {
+                        serverUser.SendMessage(Command.GetReceiver(sender, channel), "I wasn't talking to you? Enter \"+hello\" if you would like to.");
+                    }
+                    else
+                    {
+                        serverUser.SendMessage(Command.GetReceiver(sender, channel), "OK, I will stop talking to you.");
+                    }
                 }
 
                 channel.DoInterpreteMessages = turnOn;
 
                 channel.DoInterpreteMessages = null != UserDictionary.Values.FirstOrDefault(u => u.TalkTo);
             }
-            else
-            {
-                serverUser.SendMessage(Command.GetReceiver(sender, channel), @"Usage: talk on|off.");
-            }
-        }
-
-        /// <summary>
-        /// The fuck command.
-        /// </summary>
-        /// <param name="command">
-        /// The command.
-        /// </param>
-        /// <param name="parameters">
-        /// The parameters.
-        /// </param>
-        /// <param name="sender">
-        /// The sender.
-        /// </param>
-        /// <param name="serverUser">
-        /// The server user.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        private static void FuckCommand(string command, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
-        {
-            string message;
-            if (null == parameters || parameters.Length == 0)
-            {
-                message = "Fuck who?";
-            }
-            else
-            {
-                switch (parameters[0])
-                {
-                    case "you":
-                        message = "Fuck you too!";
-                        break;
-                    case "me":
-                        message = "You are too ugly!";
-                        break;
-                    default:
-                        message = string.Format("Searching for {0}...", string.Join(" ", parameters));
-                        break;
-                }
-            }
-
-            serverUser.SendMessage(Command.GetReceiver(sender, channel), message);
         }
 
         /// <summary>
         /// The hello command.
-        /// </summary>
-        /// <param name="command">
-        /// The command.
-        /// </param>
-        /// <param name="parameters">
-        /// The parameters.
-        /// </param>
-        /// <param name="sender">
-        /// The sender.
-        /// </param>
-        /// <param name="serverUser">
-        /// The server user.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        private static void HelloCommand(string command, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
-        {
-            serverUser.SendMessage(Command.GetReceiver(sender, channel), "Hello!");
-        }
-
         /// <summary>
         /// The help command.
         /// </summary>
@@ -336,13 +265,13 @@ namespace ZenioxBot
             string message;
             if (null == parameters || parameters.Length == 0)
             {
-                message = DateTime.Now.ToLongTimeString();
+                message = DateTime.Now.ToString("u", serverUser.CultureInfo);
             }
             else
             {
                 try
                 {
-                    message = DateTime.Now.ToString(parameters[0]);
+                    message = DateTime.Now.ToString(parameters[0], serverUser.CultureInfo);
                 }
                 catch (Exception)
                 {
