@@ -32,13 +32,16 @@ namespace ZenioxBot
             ServerUser serverUser = null;
             Channel channel = null;
 
-            try
-            {
-                Commands.Register();
+            Commands.Register();
 
-                bool isRunning = true;
-                while (isRunning)
+            bool isRunning = true;
+            string answer = "My name is Batman";
+            string question;
+            while (isRunning)
+            {
+                try
                 {
+
                     Console.Write("> ");
                     string line = Console.ReadLine();
                     if (line == null)
@@ -59,11 +62,11 @@ namespace ZenioxBot
                     {
                         case "j":
                             serverUser = new ServerUser(
-                                ConfigurationManager.AppSettings.Get("HostName"), 
-                                ConfigurationManager.AppSettings.Get("UserName"), 
-                                ConfigurationManager.AppSettings.Get("TheWord"), 
-                                ConfigurationManager.AppSettings.Get("NickName"), 
-                                ConfigurationManager.AppSettings.Get("RealName"), 
+                                ConfigurationManager.AppSettings.Get("HostName"),
+                                ConfigurationManager.AppSettings.Get("UserName"),
+                                ConfigurationManager.AppSettings.Get("TheWord"),
+                                ConfigurationManager.AppSettings.Get("NickName"),
+                                ConfigurationManager.AppSettings.Get("RealName"),
                                 int.Parse(ConfigurationManager.AppSettings.Get("MillisecondsBetweenCommands")))
                                              {
                                                  CommandPrefix = "+"
@@ -109,14 +112,20 @@ namespace ZenioxBot
                             }
 
                             break;
+                        case "r":
+                            question = parameters.Length == 0 ? answer : string.Join(" ", parameters);
+                            answer = Commands.AskRomulon(question, "zenioxbottest", "Dr. Test");
+                            Console.WriteLine(answer);
+                            break;
                     }
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Fatal error {0}\r{1}", e.Message, e.StackTrace);
                 }
             }
-            catch (Exception e)
-            {
-                Debug.WriteLine("Fatal error {0}\r{1}", e.Message, e.StackTrace);
-                throw;
-            }
+
         }
 
         #endregion

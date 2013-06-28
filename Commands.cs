@@ -6,22 +6,95 @@
 //   The commands.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace ZenioxBot
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Net;
 
     using NetIrc2;
 
     /// <summary>
-    /// The commands.
+    ///     The commands.
     /// </summary>
     internal static class Commands
     {
+        #region Static Fields
+
+        /// <summary>
+        /// The known users.
+        /// </summary>
+        private static readonly List<string> KnownUsers = new List<string>();
+
+        #endregion
+
         #region Public Methods and Operators
+
+        /// <summary>
+        /// The ask romulon.
+        /// </summary>
+        /// <param name="message">
+        /// The message.
+        /// </param>
+        /// <param name="userName">
+        /// The user name.
+        /// </param>
+        /// <param name="botName">
+        /// The bot name.
+        /// </param>
+        /// <returns>
+        /// The <see cref="string"/>.
+        /// </returns>
+        public static string AskRomulon(string message, string userName, string botName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(userName))
+                {
+                    userName = "Anonymous";
+                }
+
+                if (!KnownUsers.Contains(userName))
+                {
+                    KnownUsers.Add(userName);
+                    string a = AskRomulon(string.Format("My name is {0}", userName), userName, botName);
+                    Debug.WriteLine(a);
+                }
+
+                string answer = Rest.Post(
+                    new Uri("http://www.pandorabots.com"), 
+                    "/pandora/talk?botid=823a1209ae36baf3", 
+                    new KeyValuePair<string, string>("botcust2", userName), 
+                    new KeyValuePair<string, string>("input", message));
+
+                // Interprete answer
+                const string SearchFor = @"Dr. Romulon:</b> ";
+                int pos = answer.IndexOf(SearchFor, StringComparison.Ordinal);
+                answer = answer.Substring(pos + SearchFor.Length);
+                pos = answer.IndexOf("<br>", StringComparison.Ordinal);
+                answer = answer.Substring(0, pos);
+                Console.WriteLine(answer);
+                answer = WebUtility.HtmlDecode(answer);
+
+                answer = answer.Replace("ALICE A.I.", "Zeniox Inc.");
+                answer = answer.Replace("ALICE", "Zeniox");
+                if (!string.IsNullOrWhiteSpace(botName))
+                {
+                    // Replace the bot name with our own
+                    answer = answer.Replace("Dr. Romulon", botName);
+                    answer = answer.Replace("Romulon", botName);
+                }
+
+                return answer;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Failed to ask Dr. Romulon");
+                return null;
+            }
+        }
 
         /// <summary>
         ///     Initializes static members of the <see cref="CommandDispatcher" /> class.
@@ -57,15 +130,11 @@ namespace ZenioxBot
         /// </param>
         internal static void Interprete(string message, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
-            try
-            {
-                string answer = AskRomulon(message, serverUser.NickName);
-                serverUser.SendMessage(Command.GetReceiver(sender, channel), answer);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Failed to ask Dr. Romulon");
-            }
+            string answer = AskRomulon(
+                message, 
+                sender == null ? channel.Name : sender.Nickname.ToString(), 
+                serverUser.NickName);
+            serverUser.SendMessage(Command.GetReceiver(sender, channel), answer);
         }
 
         /// <summary>
@@ -120,41 +189,6 @@ namespace ZenioxBot
             {
                 serverUser.SendMessage(Command.GetReceiver(sender, channel), @"Usage: talk on|off.");
             }
-        }
-
-        /// <summary>
-        /// The ask romulon.
-        /// </summary>
-        /// <param name="message">
-        /// The message.
-        /// </param>
-        /// <param name="name">
-        /// The name.
-        /// </param>
-        /// <returns>
-        /// The <see cref="string"/>.
-        /// </returns>
-        private static string AskRomulon(string message, string name)
-        {
-            string answer = Rest.Post(
-                new Uri("http://www.pandorabots.com"), 
-                "/pandora/talk?botid=823a1209ae36baf3", 
-                new KeyValuePair<string, string>("botcust2", "9868c3a47e7aabb8"), 
-                new KeyValuePair<string, string>("input", WebUtility.UrlEncode(message)));
-
-            // Interprete answer
-            const string SearchFor = @"Dr. Romulon:</b> ";
-            int pos = answer.IndexOf(SearchFor, StringComparison.Ordinal);
-            answer = answer.Substring(pos + SearchFor.Length);
-            pos = answer.IndexOf("<br>", StringComparison.Ordinal);
-            answer = answer.Substring(0, pos);
-            answer = WebUtility.HtmlDecode(answer);
-
-            // Replace the bot name with our own
-            answer = answer.Replace("Dr. Romulon", name);
-            answer = answer.Replace("Romulon", name);
-
-            return answer;
         }
 
         /// <summary>

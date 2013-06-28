@@ -306,6 +306,11 @@ namespace ZenioxBot
             return identity.Username == this.UserName;
         }
 
+        internal bool IsMe(string name)
+        {
+            return name == this.UserName;
+        }
+
         internal void SendCommand(IrcStatement command)
         {
             this.Wait();
