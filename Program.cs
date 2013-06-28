@@ -16,22 +16,12 @@
     {
         internal static void Main(string[] args)
         {
+            ServerUser serverUser = null;
+            Channel channel = null;
+
             try
             {
                 Commands.Register();
-
-                //using (var serverUser = new ServerUser(
-                //    ConfigurationManager.AppSettings.Get("HostName"),
-                //    ConfigurationManager.AppSettings.Get("UserName"),
-                //    ConfigurationManager.AppSettings.Get("TheWord"),
-                //    ConfigurationManager.AppSettings.Get("NickName"),
-                //    ConfigurationManager.AppSettings.Get("RealName"),
-                //    int.Parse(ConfigurationManager.AppSettings.Get("MillisecondsBetweenCommands"))))
-                //{
-                //    serverUser.CommandPrefix = "+";
-                //    using (var channel = new Channel(serverUser, ConfigurationManager.AppSettings.Get("ChannelName")))
-                //    {
-                //        channel.KickBots = true;
 
                 var isRunning = true;
                 while (isRunning)
@@ -54,25 +44,58 @@
 
                     switch (command)
                     {
-                        case "q":
-                            isRunning = false;
+                        case "j":
+                            serverUser = new ServerUser(
+                                ConfigurationManager.AppSettings.Get("HostName"),
+                                ConfigurationManager.AppSettings.Get("UserName"),
+                                ConfigurationManager.AppSettings.Get("TheWord"),
+                                ConfigurationManager.AppSettings.Get("NickName"),
+                                ConfigurationManager.AppSettings.Get("RealName"),
+                                int.Parse(ConfigurationManager.AppSettings.Get("MillisecondsBetweenCommands")))
+                                             {
+                                                 CommandPrefix = "+"
+                                             };
+                            var channelName = ConfigurationManager.AppSettings.Get("ChannelName");
+                            if (parameters.Length > 0)
+                            {
+                                channelName = parameters[0];
+                            }
+                            channel = new Channel(serverUser, channelName)
+                                          {
+                                              KickBots = true
+                                          };
                             break;
+                        case "q":
                         case "l":
-                            //channel.Leave();
+                            if (null != channel)
+                            {
+                                channel.Leave();
+                                serverUser.LogOut();
+                            }
+
+                            if (command == "q")
+                            {
+                                isRunning = false;
+                            }
+
                             break;
                         case "t":
-                            var result = Rest.Post(
-     new Uri("http://www.pandorabots.com"),
-     "/pandora/talk?botid=823a1209ae36baf3",
-     new KeyValuePair<string, string>("botcust2", "9868c3a47e7aabb8"),
-     new KeyValuePair<string, string>("input", WebUtility.UrlEncode(string.Join(" ", parameters))));
+                            if (channel == null)
+                            {
+                                break;
+                            }
 
-                            Console.WriteLine(Commands.GetBotAnswer(result));
+                            if (parameters.Length == 1)
+                            {
+                                channel.DoInterpreteMessages = parameters[0] == "on";
+                            }
+                            else
+                            {
+                                Console.WriteLine("Usage: t on|off");
+                            }
                             break;
                     }
                 }
-                //    }
-                //}
             }
             catch (Exception e)
             {

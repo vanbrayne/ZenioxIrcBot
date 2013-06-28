@@ -143,12 +143,25 @@ namespace ZenioxBot
         /// </param>
         internal void OnMessage(EventDispatcher.MessageType messageType, string message, IrcIdentity sender)
         {
-            Debug.WriteLine(
-                string.Format(
-                    "Message \"{0}\" (from {1})", 
-                    message, 
-                    (sender != null) ? sender.Nickname.ToString() : "Anonymous"), 
-                this.ToString());
+            if (this.ServerUser.IsMe(sender))
+            {
+                return;
+            }
+
+            if (this.DoInterpreteMessages &&
+                (messageType == EventDispatcher.MessageType.Message))
+            {
+                Commands.Interprete(message, sender, this.ServerUser, this);
+            }
+            else
+            {
+                Debug.WriteLine(
+                    string.Format(
+                        "Message \"{0}\" (from {1})",
+                        message,
+                        (sender != null) ? sender.Nickname.ToString() : "Anonymous"),
+                    this.ToString());
+            }
         }
 
         internal void OnCommand(EventDispatcher.MessageType messageType, string command, string[] parameters, IrcIdentity sender)
@@ -200,5 +213,7 @@ namespace ZenioxBot
             ServerUser.Client.Kick(name, this.Name, reason);
             ServerUser.CommandSent();
         }
+
+        public bool DoInterpreteMessages { get; set; }
     }
 }

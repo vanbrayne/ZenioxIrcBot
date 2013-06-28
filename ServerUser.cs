@@ -301,6 +301,11 @@ namespace ZenioxBot
             Debug.WriteLine(string.Format("Simple message: \"{0}\"", message), this.ToString());
         }
 
+        internal bool IsMe(IrcIdentity identity)
+        {
+            return identity.Username == this.UserName;
+        }
+
         internal void SendCommand(IrcStatement command)
         {
             this.Wait();

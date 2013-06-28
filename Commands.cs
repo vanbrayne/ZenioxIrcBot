@@ -4,6 +4,8 @@ using System.Net;
 
 namespace ZenioxBot
 {
+    using System.Collections.Generic;
+
     using NetIrc2;
 
     internal static class Commands
@@ -83,20 +85,76 @@ namespace ZenioxBot
 
         private static void AskBotCommand(string c, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
-            var message = string.Join(" ", parameters);
-            var input = WebUtility.UrlEncode(message);
-            Rest.Post(new Uri("http://www.pandorabots.com/pandora/talk?botid=823a1209ae36baf3"), "botcust2=9868c3a47e7aabb8&input=" + input);
+            string message;
+            bool okCommand = true;
+            bool turnOn = false;
+            if (null == parameters || parameters.Length != 1)
+            {
+                okCommand = false;
+                turnOn = false;
+            }
+            else
+            {
+                switch (parameters[0])
+                {
+                    case "on":
+                        turnOn = true;
+                        break;
+                    case "off":
+                        turnOn = false;
+                        break;
+                    default:
+                        turnOn = false;
+                        okCommand = false;
+                        break;
+                }
+            }
+
+            if (okCommand)
+            {
+                channel.DoInterpreteMessages = turnOn;
+            }
+            else
+            {
+                message = @"Usage: talk on|off.";
+                serverUser.SendMessage(Command.GetReceiver(sender, channel), message);
+            }
         }
 
-        public static string GetBotAnswer(string message)
+        internal static void Interprete(string message, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
-            const string searchFor = @"Dr. Romulon:</b> ";
-            var pos = message.IndexOf(searchFor, System.StringComparison.Ordinal);
-            message = message.Substring(pos + searchFor.Length);
-            pos = message.IndexOf("<br>", System.StringComparison.Ordinal);
-            message = message.Substring(0, pos);
+            try
+            {
+                var answer = AskRomulon(message, serverUser.NickName);
+                serverUser.SendMessage(Command.GetReceiver(sender, channel), answer);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Failed to ask Dr. Romulon");
+            }
+        }
 
-            return message;
+        private static string AskRomulon(string message, string name)
+        {
+            var answer = Rest.Post(
+                    new Uri("http://www.pandorabots.com"),
+                    "/pandora/talk?botid=823a1209ae36baf3",
+                    new KeyValuePair<string, string>("botcust2", "9868c3a47e7aabb8"),
+                    new KeyValuePair<string, string>("input", WebUtility.UrlEncode(message)));
+
+            // Interprete answer
+            const string SearchFor = @"Dr. Romulon:</b> ";
+            var pos = answer.IndexOf(SearchFor, System.StringComparison.Ordinal);
+            answer = answer.Substring(pos + SearchFor.Length);
+            pos = answer.IndexOf("<br>", System.StringComparison.Ordinal);
+            answer = answer.Substring(0, pos);
+            answer = WebUtility.HtmlDecode(answer);
+
+            // Replace the bot name with our own
+            answer = answer.Replace("Dr. Romulon", name);
+            answer = answer.Replace("Romulon", name);
+
+            return answer;
         }
     }
 }
