@@ -4,6 +4,7 @@ namespace ZenioxBot
 {
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Reflection;
 
     using NetIrc2;
     using NetIrc2.Events;
@@ -95,142 +96,311 @@ namespace ZenioxBot
 
         private static void OnMotdBegin(object sender, EventArgs eventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_MOTD_BEGIN", serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnMotdEnd(object sender, EventArgs eventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_MOTD_END", serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnChannelListBegin(object sender, EventArgs eventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_CHANNEL_LIST_BEGIN", serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnChannelListEnd(object sender, EventArgs eventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_CHANNEL_LIST_END", serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnQuit(object sender, QuitEventArgs quitEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_QUIT", serverUser.ToString());
-            throw new NotImplementedException();
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnKick(object sender, KickEventArgs kickEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_KICK", serverUser.ToString());
-            throw new NotImplementedException();
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnPingReply(object sender, PingReplyEventArgs pingReplyEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_PING_REPLY", serverUser.ToString());
-            throw new NotImplementedException();
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnNameListReply(object sender, NameListReplyEventArgs nameListReplyEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            serverUser.OnNameList(nameListReplyEventArgs);
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                serverUser.OnNameList(nameListReplyEventArgs);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnNameListEnd(object sender, NameListEndEventArgs nameListEndEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine(string.Format("ON_NAME_LIST_END: channel {0}", nameListEndEventArgs.Channel), serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnNameChange(object sender, NameChangeEventArgs nameChangeEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_NAME_CHANGE", serverUser.ToString());
-            throw new NotImplementedException();
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnSimpleMessage(object sender, SimpleMessageEventArgs simpleMessageEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            serverUser.OnSimpleMessage(simpleMessageEventArgs.Message);
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                serverUser.OnSimpleMessage(simpleMessageEventArgs.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnMode(object sender, ModeEventArgs modeEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine(string.Format("ON_MODE: {0}", modeEventArgs.Command), serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Debug.WriteLine(string.Format("ON_MODE: {0}", modeEventArgs.Command), serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnMessage(object sender, ChatMessageEventArgs chatMessageEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            serverUser.OnMessage(MessageType.Message, chatMessageEventArgs);
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                serverUser.OnMessage(MessageType.Message, chatMessageEventArgs);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnChatAction(object sender, ChatMessageEventArgs chatMessageEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            serverUser.OnMessage(MessageType.ChatAction, chatMessageEventArgs);
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                serverUser.OnMessage(MessageType.ChatAction, chatMessageEventArgs);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnNotice(object sender, ChatMessageEventArgs chatMessageEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            serverUser.OnMessage(MessageType.Notice, chatMessageEventArgs);
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                serverUser.OnMessage(MessageType.Notice, chatMessageEventArgs);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnJoinChannel(object sender, JoinLeaveEventArgs joinLeaveEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            serverUser.OnLeaveJoinChannels(true, joinLeaveEventArgs);
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                serverUser.OnLeaveJoinChannels(true, joinLeaveEventArgs);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnLeaveChannel(object sender, JoinLeaveEventArgs joinLeaveEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            serverUser.OnLeaveJoinChannels(false, joinLeaveEventArgs);
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                serverUser.OnLeaveJoinChannels(false, joinLeaveEventArgs);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnIrcError(object sender, IrcErrorEventArgs ircErrorEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            var parameters = string.Join(" ", ircErrorEventArgs.Data.Parameters);
-            Debug.WriteLine(string.Format("ON_IRC_ERROR, Parameters: {0}", parameters), serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                var parameters = string.Join(" ", ircErrorEventArgs.Data.Parameters);
+                Debug.WriteLine(string.Format("ON_IRC_ERROR, Parameters: {0}", parameters), serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnInvitation(object sender, InvitationEventArgs invitationEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_INVITATION", serverUser.ToString());
-            throw new NotImplementedException();
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnChannelTopicChange(object sender, ChannelTopicChangeEventArgs channelTopicChangeEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_CHANNEL_TOPIC_CHANGE", serverUser.ToString());
-            throw new NotImplementedException();
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnChannelListEntry(object sender, ChannelListEntryEventArgs channelListEntryEventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_CHANNEL_LIST_ENTRY", serverUser.ToString());
-            throw new NotImplementedException();
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Trace.WriteLine(information, serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
 
         private static void OnConnected(object sender, EventArgs eventArgs)
         {
-            var serverUser = GetServerUser(sender);
-            Debug.WriteLine("ON_CONNECTED", serverUser.ToString());
+            var information = MethodBase.GetCurrentMethod().Name;
+            try
+            {
+                var serverUser = GetServerUser(sender);
+                Debug.WriteLine("ON_CONNECTED", serverUser.ToString());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0} exception {1}", information, ex.Message);
+            }
         }
     }
 }

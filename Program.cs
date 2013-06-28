@@ -11,7 +11,6 @@ namespace ZenioxBot
 {
     using System;
     using System.Configuration;
-    using System.Diagnostics;
     using System.Linq;
 
     /// <summary>
@@ -36,12 +35,10 @@ namespace ZenioxBot
 
             bool isRunning = true;
             string answer = "My name is Batman";
-            string question;
             while (isRunning)
             {
                 try
                 {
-
                     Console.Write("> ");
                     string line = Console.ReadLine();
                     if (line == null)
@@ -117,19 +114,17 @@ namespace ZenioxBot
 
                             break;
                         case "r":
-                            question = parameters.Length == 0 ? answer : string.Join(" ", parameters);
+                            var question = parameters.Length == 0 ? answer : string.Join(" ", parameters);
                             answer = Commands.AskBot(Commands.ChatBot.Chato, question, "zenioxbottest", "Dr. Test");
                             Console.WriteLine(answer);
                             break;
                     }
-
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine("Fatal error {0}\r{1}", e.Message, e.StackTrace);
                 }
             }
-
         }
 
         #endregion
