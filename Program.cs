@@ -118,7 +118,7 @@ namespace ZenioxBot
                             break;
                         case "r":
                             question = parameters.Length == 0 ? answer : string.Join(" ", parameters);
-                            answer = Commands.AskRomulon(question, "zenioxbottest", "Dr. Test");
+                            answer = Commands.AskBot(Commands.ChatBot.Chato, question, "zenioxbottest", "Dr. Test");
                             Console.WriteLine(answer);
                             break;
                     }

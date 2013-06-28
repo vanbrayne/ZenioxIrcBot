@@ -27,6 +27,15 @@ namespace ZenioxBot
         /// </summary>
         private static readonly Dictionary<string, User> UserDictionary = new Dictionary<string, User>();
 
+        internal enum ChatBot
+        {
+            None,
+
+            Romulus,
+
+            Chato
+        }
+
         #endregion
 
         #region Public Methods and Operators
@@ -43,8 +52,11 @@ namespace ZenioxBot
         }
 
         /// <summary>
-        /// The ask romulon.
+        /// The ask bot command.
         /// </summary>
+        /// <param name="chatBot">
+        /// The chatBot to use.
+        /// </param>
         /// <param name="message">
         /// The message.
         /// </param>
@@ -54,42 +66,85 @@ namespace ZenioxBot
         /// <param name="botName">
         /// The bot name.
         /// </param>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <returns>
         /// The <see cref="string"/>.
         /// </returns>
-        public static string AskRomulon(string message, string userName, string botName)
+        internal static string AskBot(ChatBot chatBot, string message, string userName, string botName)
         {
             try
             {
-                var answer = Rest.Post(
-                    new Uri("http://www.pandorabots.com"),
-                    "/pandora/talk?botid=823a1209ae36baf3",
-                    new KeyValuePair<string, string>("botcust2", userName),
-                    new KeyValuePair<string, string>("input", message));
+                string answer;
+                string searchForStart;
+                string searchForEnd;
+
+                switch (chatBot)
+                {
+                    case ChatBot.Romulus:
+                        answer = Rest.Post(
+                            new Uri("http://www.pandorabots.com"),
+                            "/pandora/talk?botid=823a1209ae36baf3",
+                            new KeyValuePair<string, string>("botcust2", userName),
+                            new KeyValuePair<string, string>("input", message));
+                        searchForStart = @"Dr. Romulon:</b> ";
+                        searchForEnd = "<br>";
+                        break;
+
+                    case ChatBot.Chato:
+                        answer = Rest.Post(
+                            new Uri("http://nlp-addiction.com"),
+                            "/chatbot/chato/f.php",
+                            new KeyValuePair<string, string>("chat", message),
+                            new KeyValuePair<string, string>("response_Array[sessionid]", "19dm6ogm92mc4krked08138c40"),
+                            new KeyValuePair<string, string>("response_Array[userid]", "24876"),
+                            new KeyValuePair<string, string>("action", "checkresponse"),
+                            new KeyValuePair<string, string>("response_Array[rname]", "Array#0"));
+                        searchForStart = @"Bot: <b><font size='+1'>";
+                        searchForEnd = "</font>";
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("chatBot", chatBot, "Unknown");
+                }
 
                 // Interprete answer
-                const string SearchFor = @"Dr. Romulon:</b> ";
-                int pos = answer.IndexOf(SearchFor, StringComparison.Ordinal);
-                answer = answer.Substring(pos + SearchFor.Length);
-                pos = answer.IndexOf("<br>", StringComparison.Ordinal);
+                var pos = answer.IndexOf(searchForStart, StringComparison.Ordinal);
+                answer = answer.Substring(pos + searchForStart.Length);
+                pos = answer.IndexOf(searchForEnd, StringComparison.Ordinal);
                 answer = answer.Substring(0, pos);
                 answer = WebUtility.HtmlDecode(answer);
 
                 answer = answer.Replace("ALICE A.I.", "Zeniox Inc.");
                 answer = answer.Replace("ALICE", "Zeniox");
                 answer = answer.Replace("seeker", "sir");
-                if (!string.IsNullOrWhiteSpace(botName))
+
+                switch (chatBot)
                 {
-                    // Replace the bot name with our own
-                    answer = answer.Replace("Dr. Romulon", botName);
-                    answer = answer.Replace("Romulon", botName);
+                    case ChatBot.Romulus:
+                        if (!string.IsNullOrWhiteSpace(botName))
+                        {
+                            // Replace the bot name with our own
+                            answer = answer.Replace("Dr. Romulon", botName);
+                            answer = answer.Replace("Romulon", botName);
+                        }
+
+                        break;
+                    case ChatBot.Chato:
+                        if (!string.IsNullOrWhiteSpace(botName))
+                        {
+                            // Replace the bot name with our own
+                            answer = answer.Replace("Chato", botName);
+                        }
+
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("chatBot", chatBot, "Unknown");
                 }
 
                 return answer;
             }
             catch (Exception)
             {
-                Console.WriteLine("Failed to ask Dr. Romulon");
+                Console.WriteLine("Failed to ask external bot {0}", chatBot);
                 return null;
             }
         }
@@ -132,7 +187,8 @@ namespace ZenioxBot
                 return;
             }
 
-            var answer = AskRomulon(
+            var answer = AskBot(
+                ChatBot.Romulus, 
                 message,
                 sender.Username,
                 serverUser.NickName);
@@ -191,22 +247,18 @@ namespace ZenioxBot
                 {
                     if (!user.HasBeenPresented)
                     {
-                        AskRomulon(string.Format("My name is {0}", sender.Nickname), sender.Username, serverUser.NickName);
-                        var a = AskRomulon("Hello", sender.Username, serverUser.NickName);
+                        AskBot(ChatBot.Romulus, string.Format("My name is {0}", sender.Nickname), sender.Username, serverUser.NickName);
+                        var a = AskBot(ChatBot.Romulus, "Hello", sender.Username, serverUser.NickName);
+                        a += " Give me the command \"+bye\" to end the conversation.";
                         serverUser.SendMessage(Command.GetReceiver(sender, channel), a);
                         user.HasBeenPresented = true;
                     }
                 }
                 else
                 {
-                    if (!user.HasBeenPresented)
-                    {
-                        serverUser.SendMessage(Command.GetReceiver(sender, channel), "I wasn't talking to you? Enter \"+hello\" if you would like to.");
-                    }
-                    else
-                    {
-                        serverUser.SendMessage(Command.GetReceiver(sender, channel), "OK, I will stop talking to you.");
-                    }
+                    serverUser.SendMessage(
+                        Command.GetReceiver(sender, channel),
+                        !user.HasBeenPresented ? "I wasn't talking to you? Enter \"+hello\" if you would like to." : "OK, I will stop talking to you.");
                 }
 
                 channel.DoInterpreteMessages = turnOn;
@@ -215,8 +267,6 @@ namespace ZenioxBot
             }
         }
 
-        /// <summary>
-        /// The hello command.
         /// <summary>
         /// The help command.
         /// </summary>
@@ -265,13 +315,13 @@ namespace ZenioxBot
             string message;
             if (null == parameters || parameters.Length == 0)
             {
-                message = DateTime.Now.ToString("u", serverUser.CultureInfo);
+                message = "The time is " + DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss", serverUser.CultureInfo) + " GMT";
             }
             else
             {
                 try
                 {
-                    message = DateTime.Now.ToString(parameters[0], serverUser.CultureInfo);
+                    message = "The time is " + DateTime.Now.ToString(parameters[0], serverUser.CultureInfo);
                 }
                 catch (Exception)
                 {
