@@ -33,8 +33,8 @@ namespace ZenioxBot
 
             Commands.Register();
 
-            bool isRunning = true;
-            string answer = "My name is Batman";
+            var isRunning = true;
+            var answer = "My name is Batman";
             while (isRunning)
             {
                 try

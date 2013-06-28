@@ -10,6 +10,7 @@ namespace ZenioxBot
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Net;
 
@@ -45,10 +46,14 @@ namespace ZenioxBot
         /// </summary>
         public static void Register()
         {
-            var command = new Command("time", TimeCommand);
-            command = new Command("help", HelpCommand);
-            command = new Command("hello", TalkCommand);
-            command = new Command("bye", TalkCommand);
+            Command[] commands =
+                {
+                    new Command("time", TimeCommand),
+                    new Command("help", HelpCommand),
+                    new Command("hello", TalkCommand),
+                    new Command("bye", TalkCommand),
+                    new Command("poll", StartPollCommand)
+                };
         }
 
         /// <summary>
@@ -107,10 +112,12 @@ namespace ZenioxBot
                 }
 
                 // Interprete answer
-                var pos = answer.IndexOf(searchForStart, StringComparison.Ordinal);
-                answer = answer.Substring(pos + searchForStart.Length);
-                pos = answer.IndexOf(searchForEnd, StringComparison.Ordinal);
-                answer = answer.Substring(0, pos);
+                answer = Rest.FindPart(answer, searchForStart, searchForEnd);
+                if (answer == null)
+                {
+                    throw new Exception("Could not find the chatbot answer.");
+                }
+
                 answer = WebUtility.HtmlDecode(answer);
 
                 answer = answer.Replace("ALICE A.I.", "Zeniox Inc.");
@@ -188,7 +195,7 @@ namespace ZenioxBot
             }
 
             var answer = AskBot(
-                ChatBot.Romulus, 
+                ChatBot.Romulus,
                 message,
                 sender.Username,
                 serverUser.NickName);
@@ -287,8 +294,8 @@ namespace ZenioxBot
         /// </param>
         private static void HelpCommand(string c, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
-            string message = CommandDispatcher.CommandList.Values.OrderBy(p => p.Name).Aggregate("Known commands:", (current, command) => current + (" +" + command.Name));
-
+            var stringList = CommandDispatcher.CommandList.Values.Select(p => p.Name).OrderBy(p => p);
+            var message = "Known commands: " + stringList.Aggregate((current, s) => current + ", " + s);
             serverUser.SendMessage(Command.GetReceiver(sender, channel), message);
         }
 
@@ -330,6 +337,70 @@ namespace ZenioxBot
             }
 
             serverUser.SendMessage(Command.GetReceiver(sender, channel), message);
+        }
+
+        private static void StartPollCommand(string command, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
+        {
+            try
+            {
+                var message = string.Join(" ", parameters);
+
+                // Find the question
+                var question = Rest.FindPart(message, string.Empty, "?");
+                if (question == null)
+                {
+                    throw new Exception("No question found. A question is one or more words, ending with a '?'");
+                }
+
+                question = question.Trim() + "?";
+
+                // Find the answers
+                var answers = Rest.FindPart(message, question, null);
+                if (answers == null)
+                {
+                    throw new Exception("No answers found. The answers are supposed to come after the '?', either as a number of single words or as a comma separated answers.");
+                }
+
+                answers = answers.Trim();
+
+                // Split the answers into individual answers
+                var splitChar = ' ';
+                if (answers.Contains(","))
+                {
+                    splitChar = ',';
+                }
+                var answerList = answers.Split(splitChar).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s));
+                if (answers.Length < 2)
+                {
+                    throw new Exception("A poll must have at least two answers.");
+                }
+
+                var values = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("answer0", question) };
+                var i = 1;
+                values.AddRange(answerList.Select(answer => new KeyValuePair<string, string>(string.Format("answer{0}", i++), answer)));
+                values.Add(new KeyValuePair<string, string>("addimages", "Make Poll"));
+
+                var reply = Rest.Post(
+                    new Uri("http://www.anonvote.com"),
+                    "/",
+                    values.ToArray());
+
+                Debug.WriteLine(reply);
+
+                const string Path1 = "http://www.anonvote.com/poll.php?id=";
+
+                var id = Rest.FindPart(reply, string.Format("<a href=\"{0}", Path1), "\" target=\"_blank");
+                if (id == null)
+                {
+                    throw new Exception("www.anonvote.com did not react as expected.");
+                }
+
+                channel.SendMessage(string.Format("Please answer poll at {0}", Path1 + id));
+            }
+            catch (Exception ex)
+            {
+                channel.SendMessage(string.Format("Failed to create poll. {0}", ex.Message));
+            }
         }
 
         #endregion
