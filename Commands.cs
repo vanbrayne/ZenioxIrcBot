@@ -26,7 +26,7 @@ namespace ZenioxBot
         /// <summary>
         /// The known users.
         /// </summary>
-        private static readonly List<string> KnownUsers = new List<string>();
+        private static readonly Dictionary<string, User> UserDictionary = new Dictionary<string, User>();
 
         #endregion
 
@@ -51,22 +51,10 @@ namespace ZenioxBot
         {
             try
             {
-                if (string.IsNullOrEmpty(userName))
-                {
-                    userName = "Anonymous";
-                }
-
-                if (!KnownUsers.Contains(userName))
-                {
-                    KnownUsers.Add(userName);
-                    string a = AskRomulon(string.Format("My name is {0}", userName), userName, botName);
-                    Debug.WriteLine(a);
-                }
-
                 string answer = Rest.Post(
-                    new Uri("http://www.pandorabots.com"), 
-                    "/pandora/talk?botid=823a1209ae36baf3", 
-                    new KeyValuePair<string, string>("botcust2", userName), 
+                    new Uri("http://www.pandorabots.com"),
+                    "/pandora/talk?botid=823a1209ae36baf3",
+                    new KeyValuePair<string, string>("botcust2", userName),
                     new KeyValuePair<string, string>("input", message));
 
                 // Interprete answer
@@ -75,7 +63,6 @@ namespace ZenioxBot
                 answer = answer.Substring(pos + SearchFor.Length);
                 pos = answer.IndexOf("<br>", StringComparison.Ordinal);
                 answer = answer.Substring(0, pos);
-                Console.WriteLine(answer);
                 answer = WebUtility.HtmlDecode(answer);
 
                 answer = answer.Replace("ALICE A.I.", "Zeniox Inc.");
@@ -106,7 +93,7 @@ namespace ZenioxBot
             command = new Command("hi", HelloCommand);
             command = new Command("hello", HelloCommand);
             command = new Command("help", HelpCommand);
-            command = new Command("talk", AskBotCommand);
+            command = new Command("talk", TalkCommand);
         }
 
         #endregion
@@ -130,9 +117,26 @@ namespace ZenioxBot
         /// </param>
         internal static void Interprete(string message, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
-            string answer = AskRomulon(
-                message, 
-                sender == null ? channel.Name : sender.Nickname.ToString(), 
+            if (null == sender)
+            {
+                return;
+            }
+
+            if (!UserDictionary.ContainsKey(sender.Username))
+            {
+                UserDictionary.Add(sender.Username, new User(sender));
+            }
+
+            var user = UserDictionary[sender.Username];
+
+            if (!user.TalkTo)
+            {
+                return;
+            }
+
+            var answer = AskRomulon(
+                message,
+                sender.Username,
                 serverUser.NickName);
             serverUser.SendMessage(Command.GetReceiver(sender, channel), answer);
         }
@@ -155,7 +159,7 @@ namespace ZenioxBot
         /// <param name="channel">
         /// The channel.
         /// </param>
-        private static void AskBotCommand(string c, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
+        private static void TalkCommand(string c, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
         {
             bool commandIsOk = true;
             bool turnOn;
@@ -183,7 +187,33 @@ namespace ZenioxBot
 
             if (commandIsOk)
             {
+                if (!UserDictionary.ContainsKey(sender.Username))
+                {
+                    UserDictionary.Add(sender.Username, new User(sender));
+                }
+
+                var user = UserDictionary[sender.Username];
+
+                user.TalkTo = turnOn;
+
+
+                if (turnOn)
+                {
+                    if (!user.HasBeenPresented)
+                    {
+                        var a = AskRomulon(string.Format("My name is {0}", sender.Nickname), sender.Username, serverUser.NickName);
+                        serverUser.SendMessage(Command.GetReceiver(sender, channel), a);
+                        user.HasBeenPresented = true;
+                    }
+                }
+                else
+                {
+                    serverUser.SendMessage(Command.GetReceiver(sender, channel), "OK, I will stop talking to you.");
+                }
+
                 channel.DoInterpreteMessages = turnOn;
+
+                channel.DoInterpreteMessages = null != UserDictionary.Values.FirstOrDefault(u => u.TalkTo);
             }
             else
             {
