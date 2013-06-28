@@ -6,7 +6,6 @@
 //   A specific channel on a server.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace ZenioxBot
 {
     using System;
@@ -46,23 +45,31 @@ namespace ZenioxBot
         #region Public Properties
 
         /// <summary>
-        /// Gets the name.
+        /// Gets or sets a value indicating whether do interprete messages.
+        /// </summary>
+        public bool DoInterpreteMessages { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether kick bots.
+        /// </summary>
+        public bool KickBots { get; set; }
+
+        /// <summary>
+        ///     Gets the name.
         /// </summary>
         public string Name { get; private set; }
 
         /// <summary>
-        /// Gets the server user.
+        ///     Gets the server user.
         /// </summary>
         public ServerUser ServerUser { get; private set; }
 
-        public bool KickBots { get; set; }
-        
         #endregion
 
         #region Properties
 
         /// <summary>
-        /// Gets a value indicating whether is active.
+        ///     Gets a value indicating whether is active.
         /// </summary>
         internal bool IsActive { get; private set; }
 
@@ -71,7 +78,7 @@ namespace ZenioxBot
         #region Public Methods and Operators
 
         /// <summary>
-        /// The dispose.
+        ///     The dispose.
         /// </summary>
         public void Dispose()
         {
@@ -79,7 +86,7 @@ namespace ZenioxBot
         }
 
         /// <summary>
-        /// The leave.
+        ///     The leave.
         /// </summary>
         public void Leave()
         {
@@ -92,10 +99,10 @@ namespace ZenioxBot
         }
 
         /// <summary>
-        /// The to string.
+        ///     The to string.
         /// </summary>
         /// <returns>
-        /// The <see cref="string"/>.
+        ///     The <see cref="string" />.
         /// </returns>
         public override string ToString()
         {
@@ -105,6 +112,26 @@ namespace ZenioxBot
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// The on command.
+        /// </summary>
+        /// <param name="messageType">
+        /// The message type.
+        /// </param>
+        /// <param name="command">
+        /// The command.
+        /// </param>
+        /// <param name="parameters">
+        /// The parameters.
+        /// </param>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        internal void OnCommand(EventDispatcher.MessageType messageType, string command, string[] parameters, IrcIdentity sender)
+        {
+            CommandDispatcher.Dispatch(command, parameters, sender, this.ServerUser, this);
+        }
 
         /// <summary>
         /// The on leave join.
@@ -157,33 +184,59 @@ namespace ZenioxBot
             {
                 Debug.WriteLine(
                     string.Format(
-                        "Message \"{0}\" (from {1})",
-                        message,
-                        (sender != null) ? sender.Nickname.ToString() : "Anonymous"),
+                        "Message \"{0}\" (from {1})", 
+                        message, 
+                        (sender != null) ? sender.Nickname.ToString() : "Anonymous"), 
                     this.ToString());
             }
         }
 
-        internal void OnCommand(EventDispatcher.MessageType messageType, string command, string[] parameters, IrcIdentity sender)
-        {
-            CommandDispatcher.Dispatch(command, parameters, sender, this.ServerUser, this);
-        }
-
+        /// <summary>
+        /// The on name list.
+        /// </summary>
+        /// <param name="ircString">
+        /// The irc string.
+        /// </param>
         internal void OnNameList(IrcString[] ircString)
         {
-            foreach (var name in ircString)
+            foreach (IrcString name in ircString)
             {
                 this.EvaluateUserName(name);
             }
         }
 
+        /// <summary>
+        /// The send message.
+        /// </summary>
+        /// <param name="message">
+        /// The message.
+        /// </param>
         internal void SendMessage(string message)
         {
-            ServerUser.SendMessage(this.Name, message);
+            this.ServerUser.SendMessage(this.Name, message);
         }
-        
+
         /// <summary>
-        /// The join.
+        /// The evaluate user name.
+        /// </summary>
+        /// <param name="name">
+        /// The name.
+        /// </param>
+        private void EvaluateUserName(string name)
+        {
+            if (this.ServerUser.IsMe(name))
+            {
+                return;
+            }
+
+            if (name.EndsWith("bot") && name != "nightbot" && this.KickBots)
+            {
+                this.Kick(name, "There can be only one!");
+            }
+        }
+
+        /// <summary>
+        ///     The join.
         /// </summary>
         private void Join()
         {
@@ -194,26 +247,22 @@ namespace ZenioxBot
             waiter.WaitFor(() => this.IsActive);
         }
 
-        #endregion
-        
-        private void EvaluateUserName(string name)
-        {
-            if (name == this.ServerUser.UserName) return;
-
-            if (name.EndsWith("bot") && this.KickBots)
-            {
-                this.SendMessage(string.Format("I would like to kick out {0}", name));
-                //this.Kick(name, "There can be only one bot - ZenioxBot!");
-            }
-        }
-
+        /// <summary>
+        /// The kick.
+        /// </summary>
+        /// <param name="name">
+        /// The name.
+        /// </param>
+        /// <param name="reason">
+        /// The reason.
+        /// </param>
         private void Kick(string name, string reason = null)
         {
-            ServerUser.Wait();
-            ServerUser.Client.Kick(name, this.Name, reason);
-            ServerUser.CommandSent();
+            this.ServerUser.Wait();
+            this.ServerUser.Client.Kick(name, this.Name, reason);
+            this.ServerUser.CommandSent();
         }
 
-        public bool DoInterpreteMessages { get; set; }
+        #endregion
     }
 }

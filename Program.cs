@@ -1,19 +1,32 @@
-﻿namespace ZenioxBot
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Program.cs" company="">
+//   
+// </copyright>
+// <summary>
+//   The main program for the IRC bot
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ZenioxBot
 {
     using System;
-    using System.Collections.Generic;
     using System.Configuration;
     using System.Diagnostics;
     using System.Linq;
-    using System.Net;
-    using System.Net.Http;
-    using System.Threading;
 
     /// <summary>
-    /// The main program for the IRC bot
+    ///     The main program for the IRC bot
     /// </summary>
     internal class Program
     {
+        #region Methods
+
+        /// <summary>
+        /// The main.
+        /// </summary>
+        /// <param name="args">
+        /// The args.
+        /// </param>
         internal static void Main(string[] args)
         {
             ServerUser serverUser = null;
@@ -23,11 +36,11 @@
             {
                 Commands.Register();
 
-                var isRunning = true;
+                bool isRunning = true;
                 while (isRunning)
                 {
                     Console.Write("> ");
-                    var line = Console.ReadLine();
+                    string line = Console.ReadLine();
                     if (line == null)
                     {
                         break;
@@ -38,28 +51,29 @@
                         continue;
                     }
 
-                    var parts = line.Split(' ');
-                    var command = parts[0].ToLower();
-                    var parameters = parts.Skip(1).ToArray();
+                    string[] parts = line.Split(' ');
+                    string command = parts[0].ToLower();
+                    string[] parameters = parts.Skip(1).ToArray();
 
                     switch (command)
                     {
                         case "j":
                             serverUser = new ServerUser(
-                                ConfigurationManager.AppSettings.Get("HostName"),
-                                ConfigurationManager.AppSettings.Get("UserName"),
-                                ConfigurationManager.AppSettings.Get("TheWord"),
-                                ConfigurationManager.AppSettings.Get("NickName"),
-                                ConfigurationManager.AppSettings.Get("RealName"),
+                                ConfigurationManager.AppSettings.Get("HostName"), 
+                                ConfigurationManager.AppSettings.Get("UserName"), 
+                                ConfigurationManager.AppSettings.Get("TheWord"), 
+                                ConfigurationManager.AppSettings.Get("NickName"), 
+                                ConfigurationManager.AppSettings.Get("RealName"), 
                                 int.Parse(ConfigurationManager.AppSettings.Get("MillisecondsBetweenCommands")))
                                              {
                                                  CommandPrefix = "+"
                                              };
-                            var channelName = ConfigurationManager.AppSettings.Get("ChannelName");
+                            string channelName = ConfigurationManager.AppSettings.Get("ChannelName");
                             if (parameters.Length > 0)
                             {
                                 channelName = parameters[0];
                             }
+
                             channel = new Channel(serverUser, channelName)
                                           {
                                               KickBots = true
@@ -93,6 +107,7 @@
                             {
                                 Console.WriteLine("Usage: t on|off");
                             }
+
                             break;
                     }
                 }
@@ -103,5 +118,7 @@
                 throw;
             }
         }
+
+        #endregion
     }
 }

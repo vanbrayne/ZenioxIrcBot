@@ -46,7 +46,7 @@ namespace ZenioxBot
         public int MilliSecondsBetween { get; private set; }
 
         /// <summary>
-        /// Wait for <see cref="condition"/> for a maximum period of <see cref="maxSeconds"/> seconds.
+        /// Wait for <see cref="condition"/> for a maximum period of <see cref="MaxSeconds"/> seconds.
         /// </summary>
         /// <param name="condition">The condition to wait for.</param>
         /// <exception cref="TimeoutException">Waited the maximum number of seconds.</exception>
