@@ -52,6 +52,7 @@
     <Compile Include="Channel.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="CommandDispatcher.cs" />
+    <Compile Include="CommandParameters.cs" />
     <Compile Include="Commands.cs" />
     <Compile Include="EventDispatcher.cs" />
     <Compile Include="Rest.cs" />

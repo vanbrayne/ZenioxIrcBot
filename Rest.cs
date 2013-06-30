@@ -19,6 +19,17 @@ namespace ZenioxBot
             }
         }
 
+        public static string Get(Uri baseAddress, string path)
+        {
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = baseAddress;
+
+                var result = client.GetAsync(path).Result;
+                return result.Content.ReadAsStringAsync().Result;
+            }
+        }
+
         /// <summary>
         /// Find the interesting part of a message
         /// </summary>

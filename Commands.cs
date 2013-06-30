@@ -28,6 +28,9 @@ namespace ZenioxBot
         /// </summary>
         private static readonly Dictionary<string, User> UserDictionary = new Dictionary<string, User>();
 
+        private static string lastPollId;
+        private static string lastPollQuestion;
+
         internal enum ChatBot
         {
             None,
@@ -52,7 +55,8 @@ namespace ZenioxBot
                     new Command("help", HelpCommand),
                     new Command("hello", TalkCommand),
                     new Command("bye", TalkCommand),
-                    new Command("poll", StartPollCommand)
+                    new Command("poll", StartPollCommand),
+                    new Command("endpoll", EndPollCommand)
                 };
         }
 
@@ -205,27 +209,13 @@ namespace ZenioxBot
         /// <summary>
         /// The ask bot command.
         /// </summary>
-        /// <param name="c">
-        /// The c.
-        /// </param>
-        /// <param name="parameters">
-        /// The parameters.
-        /// </param>
-        /// <param name="sender">
-        /// The sender.
-        /// </param>
-        /// <param name="serverUser">
-        /// The server user.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        private static void TalkCommand(string c, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
+        /// <param name="commandParameters">The parameters that describes the command and the command context.</param>
+        private static void TalkCommand(CommandParameters commandParameters)
         {
             var commandIsOk = true;
             bool turnOn;
 
-            switch (c)
+            switch (commandParameters.CommandName)
             {
                 case "hello":
                     turnOn = true;
@@ -241,12 +231,12 @@ namespace ZenioxBot
 
             if (commandIsOk)
             {
-                if (!UserDictionary.ContainsKey(sender.Username))
+                if (!UserDictionary.ContainsKey(commandParameters.Sender.Username))
                 {
-                    UserDictionary.Add(sender.Username, new User(sender));
+                    UserDictionary.Add(commandParameters.Sender.Username, new User(commandParameters.Sender));
                 }
 
-                var user = UserDictionary[sender.Username];
+                var user = UserDictionary[commandParameters.Sender.Username];
 
                 user.TalkTo = turnOn;
 
@@ -254,81 +244,57 @@ namespace ZenioxBot
                 {
                     if (!user.HasBeenPresented)
                     {
-                        AskBot(ChatBot.Romulus, string.Format("My name is {0}", sender.Nickname), sender.Username, serverUser.NickName);
-                        var a = AskBot(ChatBot.Romulus, "Hello", sender.Username, serverUser.NickName);
+                        AskBot(
+                            ChatBot.Romulus,
+                            string.Format("My name is {0}", commandParameters.Sender.Nickname),
+                            commandParameters.Sender.Username,
+                            commandParameters.ServerUser.NickName);
+                        var a = AskBot(ChatBot.Romulus, "Hello", commandParameters.Sender.Username, commandParameters.ServerUser.NickName);
                         a += " Give me the command \"+bye\" to end the conversation.";
-                        serverUser.SendMessage(Command.GetReceiver(sender, channel), a);
+                        commandParameters.ServerUser.SendMessage(commandParameters.Receiver, a);
                         user.HasBeenPresented = true;
                     }
                 }
                 else
                 {
-                    serverUser.SendMessage(
-                        Command.GetReceiver(sender, channel),
+                    commandParameters.ServerUser.SendMessage(
+                        commandParameters.Receiver,
                         !user.HasBeenPresented ? "I wasn't talking to you? Enter \"+hello\" if you would like to." : "OK, I will stop talking to you.");
                 }
 
-                channel.DoInterpreteMessages = turnOn;
+                commandParameters.Channel.DoInterpreteMessages = turnOn;
 
-                channel.DoInterpreteMessages = null != UserDictionary.Values.FirstOrDefault(u => u.TalkTo);
+                commandParameters.Channel.DoInterpreteMessages = null != UserDictionary.Values.FirstOrDefault(u => u.TalkTo);
             }
         }
 
         /// <summary>
         /// The help command.
         /// </summary>
-        /// <param name="c">
-        /// The c.
-        /// </param>
-        /// <param name="parameters">
-        /// The parameters.
-        /// </param>
-        /// <param name="sender">
-        /// The sender.
-        /// </param>
-        /// <param name="serverUser">
-        /// The server user.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        private static void HelpCommand(string c, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
+        /// <param name="commandParameters">The parameters that describes the command and the command context.</param>
+        private static void HelpCommand(CommandParameters commandParameters)
         {
             var stringList = CommandDispatcher.CommandList.Values.Select(p => p.Name).OrderBy(p => p);
             var message = "Known commands: " + stringList.Aggregate((current, s) => current + ", " + s);
-            serverUser.SendMessage(Command.GetReceiver(sender, channel), message);
+            commandParameters.ServerUser.SendMessage(commandParameters.Receiver, message);
         }
 
         /// <summary>
         /// The time command.
         /// </summary>
-        /// <param name="command">
-        /// The command.
-        /// </param>
-        /// <param name="parameters">
-        /// The parameters.
-        /// </param>
-        /// <param name="sender">
-        /// The sender.
-        /// </param>
-        /// <param name="serverUser">
-        /// The server user.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        private static void TimeCommand(string command, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
+        /// <param name="commandParameters">The parameters that describes the command and the command context.</param>
+        private static void TimeCommand(CommandParameters commandParameters)
         {
             string message;
-            if (null == parameters || parameters.Length == 0)
+            if (null == commandParameters.Parameters || commandParameters.Parameters.Length == 0)
             {
-                message = "The time is " + DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss", serverUser.CultureInfo) + " GMT";
+                message = "The time is " + DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss", commandParameters.ServerUser.CultureInfo) + " GMT";
             }
             else
             {
                 try
                 {
-                    message = "The time is " + DateTime.Now.ToString(parameters[0], serverUser.CultureInfo);
+                    message = "The time is " + DateTime.Now.ToString(commandParameters.Parameters[0], commandParameters.ServerUser.CultureInfo);
                 }
                 catch (Exception)
                 {
@@ -336,73 +302,135 @@ namespace ZenioxBot
                 }
             }
 
-            serverUser.SendMessage(Command.GetReceiver(sender, channel), message);
+            commandParameters.ServerUser.SendMessage(commandParameters.Receiver, message);
         }
 
-        private static void StartPollCommand(string command, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel)
+        private static void StartPollCommand(CommandParameters commandParameters)
         {
+            const string Path1 = "http://www.anonvote.com/poll.php?id=";
+
             try
             {
-                var message = string.Join(" ", parameters);
-
-                // Find the question
-                var question = Rest.FindPart(message, string.Empty, "?");
-                if (question == null)
+                if (lastPollId == null)
                 {
-                    throw new Exception("No question found. A question is one or more words, ending with a '?'");
+                    var message = string.Join(" ", commandParameters.Parameters);
+
+                    // Find the question
+                    var question = Rest.FindPart(message, string.Empty, "?");
+                    if (question == null)
+                    {
+                        throw new Exception("No question found. A question is one or more words, ending with a '?'");
+                    }
+
+                    question = question.Trim() + "?";
+
+                    // Find the answers
+                    var answers = Rest.FindPart(message, question, null);
+                    if (answers == null)
+                    {
+                        throw new Exception("No answers found. The answers are supposed to come after the '?', either as a number of single words or as a comma separated answers.");
+                    }
+
+                    answers = answers.Trim();
+
+                    // Split the answers into individual answers
+                    var splitChar = ' ';
+                    if (answers.Contains(","))
+                    {
+                        splitChar = ',';
+                    }
+
+                    var answerList = answers.Split(splitChar).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s));
+                    if (answers.Length < 2)
+                    {
+                        throw new Exception("A poll must have at least two answers.");
+                    }
+
+                    var values = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("answer0", question) };
+                    var i = 1;
+                    values.AddRange(answerList.Select(answer => new KeyValuePair<string, string>(string.Format("answer{0}", i++), answer)));
+                    values.Add(new KeyValuePair<string, string>("addimages", "Make Poll"));
+
+                    var reply = Rest.Post(
+                        new Uri("http://www.anonvote.com"),
+                        "/",
+                        values.ToArray());
+
+                    lastPollId = Rest.FindPart(reply, string.Format("<a href=\"{0}", Path1), "\" target=\"_blank");
+                    if (lastPollId == null)
+                    {
+                        throw new Exception("www.anonvote.com did not react as expected.");
+                    }
+
+                    lastPollQuestion = question;
+                    commandParameters.Channel.SendMessage(string.Format("New poll: {0} Please answer poll at {1}", question, Path1 + lastPollId));
                 }
-
-                question = question.Trim() + "?";
-
-                // Find the answers
-                var answers = Rest.FindPart(message, question, null);
-                if (answers == null)
+                else
                 {
-                    throw new Exception("No answers found. The answers are supposed to come after the '?', either as a number of single words or as a comma separated answers.");
+                    if (commandParameters.Parameters != null && commandParameters.Parameters.Length > 0)
+                    {
+                        throw new Exception(string.Format("You must end the last poll ({0}) before you can create a new poll.", lastPollQuestion));
+                    }
+
+                    commandParameters.Channel.SendMessage(string.Format("Current poll: {0} Please answer poll at {1}", lastPollQuestion, Path1 + lastPollId));
                 }
-
-                answers = answers.Trim();
-
-                // Split the answers into individual answers
-                var splitChar = ' ';
-                if (answers.Contains(","))
-                {
-                    splitChar = ',';
-                }
-                var answerList = answers.Split(splitChar).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s));
-                if (answers.Length < 2)
-                {
-                    throw new Exception("A poll must have at least two answers.");
-                }
-
-                var values = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("answer0", question) };
-                var i = 1;
-                values.AddRange(answerList.Select(answer => new KeyValuePair<string, string>(string.Format("answer{0}", i++), answer)));
-                values.Add(new KeyValuePair<string, string>("addimages", "Make Poll"));
-
-                var reply = Rest.Post(
-                    new Uri("http://www.anonvote.com"),
-                    "/",
-                    values.ToArray());
-
-                Debug.WriteLine(reply);
-
-                const string Path1 = "http://www.anonvote.com/poll.php?id=";
-
-                var id = Rest.FindPart(reply, string.Format("<a href=\"{0}", Path1), "\" target=\"_blank");
-                if (id == null)
-                {
-                    throw new Exception("www.anonvote.com did not react as expected.");
-                }
-
-                channel.SendMessage(string.Format("Please answer poll at {0}", Path1 + id));
             }
             catch (Exception ex)
             {
-                channel.SendMessage(string.Format("Failed to create poll. {0}", ex.Message));
+                commandParameters.Channel.SendMessage(string.Format("Failed to create poll. {0}", ex.Message));
             }
         }
 
+        private static void EndPollCommand(CommandParameters commandParameters)
+        {
+            try
+            {
+                if (lastPollId == null)
+                {
+                    throw new Exception("There is no current poll.");
+                }
+
+                var path = string.Format("/poll.php?id={0}&results=true", lastPollId);
+                var reply = Rest.Get(
+                    new Uri("http://www.anonvote.com"), path);
+
+                // Jump to answer table
+                string answers;
+                Rest.FindPart(reply, "<h1>", "class=\"tables\"", out answers);
+
+                if (null == answers)
+                {
+                    throw new Exception("Could not parse poll results on www.anonvote.com");
+                }
+
+                commandParameters.Channel.SendMessage(string.Format("Results for \"{0}\"", lastPollQuestion));
+
+                do
+                {
+                    // Find the answer
+                    var answer = Rest.FindPart(answers, "<span class=\"boldNormal2\">", "</span>", out answers);
+                    if (answer == null)
+                    {
+                        break;
+                    }
+
+                    // Find the result
+                    var result = Rest.FindPart(answers, "<span class=\"boldNormal\">", "</span>", out answers);
+
+                    commandParameters.Channel.SendMessage(string.Format("{0}: {1}", answer, result));
+                }
+                while (true);
+
+                commandParameters.Channel.SendMessage(string.Format("Graph of results: {0}{1}", "http://www.anonvote.com", path));
+                lastPollId = null;
+                lastPollQuestion = null;
+            }
+            catch (Exception ex)
+            {
+                commandParameters.Channel.SendMessage(string.Format("Failed to end poll. {0}", ex.Message));
+            }
+        }
+        
         #endregion
     }
 }

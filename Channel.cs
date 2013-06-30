@@ -34,6 +34,12 @@ namespace ZenioxBot
             this.ServerUser = serverUser;
             this.Name = name;
             this.KickBots = false;
+
+            if (null == serverUser)
+            {
+                return;
+            }
+
             this.ServerUser.Add(this);
 
             // Join
@@ -213,6 +219,12 @@ namespace ZenioxBot
         /// </param>
         internal void SendMessage(string message)
         {
+            if (null == this.ServerUser)
+            {
+                Trace.WriteLine(message);
+                return;
+            }
+
             this.ServerUser.SendMessage(this.Name, message);
         }
 

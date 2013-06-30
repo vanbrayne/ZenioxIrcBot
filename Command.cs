@@ -15,22 +15,8 @@
         /// <summary>
         /// The command function.
         /// </summary>
-        /// <param name="commandName">
-        /// The command.
-        /// </param>
-        /// <param name="parameters">
-        /// The parameters.
-        /// </param>
-        /// <param name="sender">
-        /// The sender.
-        /// </param>
-        /// <param name="serverUser">
-        /// The server user.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        internal delegate void CommandFunction(string commandName, string[] parameters, IrcIdentity sender, ServerUser serverUser, Channel channel);
+        /// <param name="commandParameters">The parameters that describes the command and the command context.</param>
+        internal delegate void CommandFunction(CommandParameters commandParameters);
 
         public string Name { get; private set; }
 

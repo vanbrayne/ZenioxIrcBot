@@ -35,7 +35,18 @@ namespace ZenioxBot
             if (CommandList.ContainsKey(commandName))
             {
                 var command = CommandList[commandName];
-                command.Function(commandName, parameters, sender, serverUser, channel);
+
+                var commandParameters = new CommandParameters
+                    {
+                        CommandName = commandName,
+                        Parameters = parameters,
+                        Sender = sender,
+                        ServerUser = serverUser,
+                        Channel = channel,
+                        Command = command
+                    };
+
+                command.Function(commandParameters);
             }
             else
             {
