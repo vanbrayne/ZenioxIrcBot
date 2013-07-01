@@ -10,6 +10,7 @@ namespace ZenioxBot
 {
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Diagnostics;
     using System.Linq;
     using System.Net;
@@ -55,6 +56,7 @@ namespace ZenioxBot
                     new Command("help", HelpCommand),
                     new Command("hello", TalkCommand),
                     new Command("bye", TalkCommand),
+                    new Command("ip", IpCommand),
                     new Command("calc", CalculatorCommand),
                     new Command("poll", StartPollCommand),
                     new Command("endpoll", EndPollCommand)
@@ -453,6 +455,11 @@ namespace ZenioxBot
             {
                 commandParameters.Channel.SendMessage(string.Format("Failed to calculate. {0}", ex.Message));
             }
+        }
+
+        private static void IpCommand(CommandParameters commandParameters)
+        {
+            commandParameters.Channel.SendMessage(string.Format("Server: {0}", ConfigurationManager.AppSettings.Get("Ip")));
         }
 
         #endregion
