@@ -119,6 +119,14 @@ namespace ZenioxBot
                             answer = Commands.AskBot(Commands.ChatBot.Chato, question, "zenioxbottest", "Dr. Test");
                             Console.WriteLine(answer);
                             break;
+                        //case "e":
+                            //TranslateCommand(new CommandParameters
+                            //                     {
+                            //                         Command = c,
+                            //                         CommandName = c.Name,
+                            //                         Parameters = "sv|en Hej, jag heter Lars".Split(' ')
+                            //                     });
+                            //break;
                     }
                 }
                 catch (Exception e)

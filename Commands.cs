@@ -58,6 +58,7 @@ namespace ZenioxBot
                     new Command("bye", TalkCommand),
                     new Command("ip", IpCommand),
                     new Command("calc", CalculatorCommand),
+                    new Command("translate", TranslateCommand),
                     new Command("poll", StartPollCommand),
                     new Command("endpoll", EndPollCommand)
                 };
@@ -462,6 +463,33 @@ namespace ZenioxBot
             commandParameters.Channel.SendMessage(string.Format("Server: {0}", ConfigurationManager.AppSettings.Get("Ip")));
         }
 
+        private static void TranslateCommand(CommandParameters commandParameters)
+        {
+            try
+            {
+                if (null == commandParameters.Parameters || commandParameters.Parameters.Length < 2)
+                {
+                    commandParameters.Channel.SendMessage("Usage: +translate <fromLanguage>|<toLanguage> <sentence>");
+                    return;
+                }
+
+                var languages = commandParameters.Parameters[0];
+                var from = string.Join(" ", commandParameters.Parameters.Skip(1));
+                var reply = Rest.Get(
+                    new Uri("http://api.mymemory.translated.net"),
+                    "/get",
+                    new KeyValuePair<string, string>("q", from),
+                    new KeyValuePair<string, string>("langpair", languages));
+
+                var answer = Rest.FindPart(reply, "translatedText\":\"", "\"}");
+
+                commandParameters.Channel.SendMessage(string.Format("Answer: {0}", answer));
+            }
+            catch (Exception ex)
+            {
+                commandParameters.Channel.SendMessage(string.Format("Failed to translate. {0}", ex.Message));
+            }
+        }
         #endregion
     }
 }
