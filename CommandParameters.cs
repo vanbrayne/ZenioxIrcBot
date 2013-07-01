@@ -10,17 +10,12 @@ namespace ZenioxBot
 
     public class CommandParameters
     {
-        public string CommandName { get; set; }
-
-        public string[] Parameters { get; set; }
-
+        public string CommandSequence { get; set; }
         public IrcIdentity Sender { get; set; }
 
         public ServerUser ServerUser { get; set; }
 
         public Channel Channel { get; set; }
-
-        internal Command Command { get; set; }
 
         public string Receiver
         {
@@ -29,5 +24,12 @@ namespace ZenioxBot
                 return Command.GetReceiver(Sender, Channel);
             }
         }
+
+        public string CommandName { get; set; }
+
+        public string[] Parameters { get; set; }
+
+        public Command Command { get; set; }
+
     }
 }

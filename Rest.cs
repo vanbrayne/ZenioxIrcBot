@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace ZenioxBot
 {
+    using System.Linq;
+    using System.Net;
     using System.Net.Http;
 
     public static class Rest
@@ -19,13 +21,15 @@ namespace ZenioxBot
             }
         }
 
-        public static string Get(Uri baseAddress, string path)
+        public static string Get(Uri baseAddress, string path, params KeyValuePair<string, string>[] keyValuePairs )
         {
+            var question = path + "?";
+            question += keyValuePairs.Select(p => p.Key + "=" + WebUtility.UrlEncode(p.Value)).Aggregate((current, p) => current + "&" + p);
             using (var client = new HttpClient())
             {
                 client.BaseAddress = baseAddress;
 
-                var result = client.GetAsync(path).Result;
+                var result = client.GetAsync(question).Result;
                 return result.Content.ReadAsStringAsync().Result;
             }
         }

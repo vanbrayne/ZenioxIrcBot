@@ -65,6 +65,7 @@ namespace ZenioxBot
             this.NickName = nickName ?? userName;
             this.RealName = realName ?? this.NickName;
             this.SecondsBetweenCommands = millisecondsBetweenCommands / 1000.0;
+            this.CommandPrefix = "This ain't going to happen";
 
             this.Client = new IrcClient();
 
@@ -386,6 +387,8 @@ namespace ZenioxBot
             {
                 throw new ArgumentNullException("name");
             }
+
+            name = name.ToLower();
 
             if (!this.channelList.ContainsKey(name))
             {

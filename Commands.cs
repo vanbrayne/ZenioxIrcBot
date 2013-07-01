@@ -55,6 +55,7 @@ namespace ZenioxBot
                     new Command("help", HelpCommand),
                     new Command("hello", TalkCommand),
                     new Command("bye", TalkCommand),
+                    new Command("calc", CalculatorCommand),
                     new Command("poll", StartPollCommand),
                     new Command("endpoll", EndPollCommand)
                 };
@@ -430,7 +431,30 @@ namespace ZenioxBot
                 commandParameters.Channel.SendMessage(string.Format("Failed to end poll. {0}", ex.Message));
             }
         }
-        
+
+        private static void CalculatorCommand(CommandParameters commandParameters)
+        {
+            try
+            {
+                var expression = string.Join(" ", commandParameters.Parameters);
+                var reply = Rest.Get(
+                    new Uri("http://www.webmath.com/"),
+                    "/cgi-bin/gopoly.cgi",
+                    new KeyValuePair<string, string>("cgiCall", "gopoly"),
+                    new KeyValuePair<string, string>("getPost", "post"),
+                    new KeyValuePair<string, string>("s", expression),
+                    new KeyValuePair<string, string>("back", "anything.html"));
+
+                var answer = Rest.FindPart(reply, new[] { "The final answer is", "<b>" }, "</b>");
+
+                commandParameters.Channel.SendMessage(string.Format("Answer: {0}", answer));
+            }
+            catch (Exception ex)
+            {
+                commandParameters.Channel.SendMessage(string.Format("Failed to calculate. {0}", ex.Message));
+            }
+        }
+
         #endregion
     }
 }
