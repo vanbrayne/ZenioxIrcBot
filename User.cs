@@ -2,12 +2,19 @@
 
 namespace ZenioxBot
 {
+    using System.Collections.Generic;
     using System.Globalization;
+    using System.Linq;
 
     using NetIrc2;
 
     internal class User
     {
+        /// <summary>
+        /// The known users.
+        /// </summary>
+        private static readonly Dictionary<string, User> UserDictionary = new Dictionary<string, User>();
+
         private static int counter;
         private readonly IrcIdentity user;
         private bool talkTo;
@@ -18,6 +25,13 @@ namespace ZenioxBot
             this.NewBotId();
             this.HasBeenPresented = false;
             this.TalkTo = false;
+            this.Translate = false;
+            this.Language = null;
+        }
+
+        public static bool AnyUserTalks()
+        {
+            return User.UserDictionary.Values.FirstOrDefault(u => u.TalkTo) != null;
         }
 
         public string UserName
@@ -55,6 +69,25 @@ namespace ZenioxBot
                     this.NewBotId();
                 }
             }
+        }
+
+        public bool Translate { get; set; }
+
+        public string Language { get; set; }
+
+        public static User GetOrCreate(IrcIdentity user)
+        {
+            if (null == user)
+            {
+                return null;
+            }
+
+            if (!UserDictionary.ContainsKey(user.Username))
+            {
+                UserDictionary.Add(user.Username, new User(user));
+            }
+
+            return UserDictionary[user.Username];
         }
 
         private void NewBotId()

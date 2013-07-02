@@ -330,8 +330,8 @@ namespace ZenioxBot
 
         internal void SendMessage(string receiver, string message)
         {
-            message = message.Replace(@"\n", @" ");
-            message = message.Replace(@"\r", @" ");
+            message = message.Replace("\n", @" ");
+            message = message.Replace("\r", @" ");
             this.Wait();
             this.Client.Message(receiver, message);
             this.CommandSent();

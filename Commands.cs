@@ -24,11 +24,6 @@ namespace ZenioxBot
     {
         #region Static Fields
 
-        /// <summary>
-        /// The known users.
-        /// </summary>
-        private static readonly Dictionary<string, User> UserDictionary = new Dictionary<string, User>();
-
         private static string lastPollId;
         private static string lastPollQuestion;
 
@@ -190,12 +185,23 @@ namespace ZenioxBot
                 return;
             }
 
-            if (!UserDictionary.ContainsKey(sender.Username))
-            {
-                UserDictionary.Add(sender.Username, new User(sender));
-            }
+            var user = User.GetOrCreate(sender);
 
-            var user = UserDictionary[sender.Username];
+            if (user.Translate)
+            {
+                var language = Services.DetectLanguage(message, false, user.Language == null ? 0.1 : 0.3);
+
+                if ((language != null) && (language != "en"))
+                {
+                    user.Language = language;
+                }
+
+                if (user.Language != null)
+                {
+                    message = Services.Translate(user.Language, "en", message);
+                    channel.SendMessage(string.Format("{0} ({1}): {2}", user.NickName, user.Language, message));
+                }
+            }
 
             if (!user.TalkTo)
             {
@@ -207,6 +213,12 @@ namespace ZenioxBot
                 message,
                 sender.Username,
                 serverUser.NickName);
+
+            if (channel != null)
+            {
+                answer = string.Format("-> {0}: {1}", sender.Nickname, answer);
+            }
+
             serverUser.SendMessage(Command.GetReceiver(sender, channel), answer);
         }
 
@@ -235,12 +247,7 @@ namespace ZenioxBot
 
             if (commandIsOk)
             {
-                if (!UserDictionary.ContainsKey(commandParameters.Sender.Username))
-                {
-                    UserDictionary.Add(commandParameters.Sender.Username, new User(commandParameters.Sender));
-                }
-
-                var user = UserDictionary[commandParameters.Sender.Username];
+                var user = User.GetOrCreate(commandParameters.Sender);
 
                 user.TalkTo = turnOn;
 
@@ -268,7 +275,7 @@ namespace ZenioxBot
 
                 commandParameters.Channel.DoInterpreteMessages = turnOn;
 
-                commandParameters.Channel.DoInterpreteMessages = null != UserDictionary.Values.FirstOrDefault(u => u.TalkTo);
+                commandParameters.Channel.DoInterpreteMessages = User.AnyUserTalks();
             }
         }
 
@@ -460,36 +467,32 @@ namespace ZenioxBot
 
         private static void IpCommand(CommandParameters commandParameters)
         {
-            commandParameters.Channel.SendMessage(string.Format("Server: {0}", ConfigurationManager.AppSettings.Get("Ip")));
+            commandParameters.Channel.SendMessage(string.Format("Server ip: {0}", ConfigurationManager.AppSettings.Get("Ip")));
         }
 
+        /// <summary>
+        /// The ask bot command.
+        /// </summary>
+        /// <param name="commandParameters">The parameters that describes the command and the command context.</param>
         private static void TranslateCommand(CommandParameters commandParameters)
         {
-            try
+            bool turnOn;
+
+            if (commandParameters.Parameters == null || commandParameters.Parameters.Length < 1)
             {
-                if (null == commandParameters.Parameters || commandParameters.Parameters.Length < 2)
-                {
-                    commandParameters.Channel.SendMessage("Usage: +translate <fromLanguage>|<toLanguage> <sentence>");
-                    return;
-                }
-
-                var languages = commandParameters.Parameters[0];
-                var from = string.Join(" ", commandParameters.Parameters.Skip(1));
-                var reply = Rest.Get(
-                    new Uri("http://api.mymemory.translated.net"),
-                    "/get",
-                    new KeyValuePair<string, string>("q", from),
-                    new KeyValuePair<string, string>("langpair", languages));
-
-                var answer = Rest.FindPart(reply, "translatedText\":\"", "\"}");
-
-                commandParameters.Channel.SendMessage(string.Format("Answer: {0}", answer));
+                commandParameters.Channel.SendMessage("Usage: +translate on|off");
+                return;
             }
-            catch (Exception ex)
-            {
-                commandParameters.Channel.SendMessage(string.Format("Failed to translate. {0}", ex.Message));
-            }
+
+            turnOn = commandParameters.Parameters[0] == "on";
+
+            var user = User.GetOrCreate(commandParameters.Sender);
+
+            user.Translate = turnOn;
+
+            commandParameters.Channel.SendMessage(string.Format("Translate {0} for user {1}.", turnOn ? "on" : "off", commandParameters.Sender.Nickname));
         }
+
         #endregion
     }
 }

@@ -181,8 +181,7 @@ namespace ZenioxBot
                 return;
             }
 
-            if (this.DoInterpreteMessages &&
-                (messageType == EventDispatcher.MessageType.Message))
+            if (messageType == EventDispatcher.MessageType.Message)
             {
                 Commands.Interprete(message, sender, this.ServerUser, this);
             }

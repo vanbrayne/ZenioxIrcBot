@@ -119,7 +119,10 @@ namespace ZenioxBot
                             answer = Commands.AskBot(Commands.ChatBot.Chato, question, "zenioxbottest", "Dr. Test");
                             Console.WriteLine(answer);
                             break;
-                        //case "e":
+                        case "e":
+                            var a = Services.DetectLanguage("Hej");
+                            break;
+                            //case "e":
                             //TranslateCommand(new CommandParameters
                             //                     {
                             //                         Command = c,
